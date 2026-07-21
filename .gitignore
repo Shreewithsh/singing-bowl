@@ -1,0 +1,25 @@
+# Python / Virtual Environment
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Instance & Database
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs & Temporary Files
+*.log
+.env
+uploads/exports/*
+!uploads/exports/.gitkeep
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

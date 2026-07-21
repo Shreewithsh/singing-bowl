@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Singing Bowl Export Desk{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of your lead generation and outreach activity{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('export_csv') }}" class="btn-secondary text-sm">
+  <i data-lucide="download" class="w-4 h-4"></i> Export CSV
+</a>
+<button onclick="openResetModal()" class="btn-danger text-sm">
+  <i data-lucide="trash-2" class="w-4 h-4"></i> Reset Database
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- ─── Stats Cards ──────────────────────────────────────────── -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <!-- Total Leads -->
+  <div class="card group hover:shadow-card-hover transition-all duration-200">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Leads</p>
+        <p id="stat-total" class="text-3xl font-bold text-gray-900 mt-1">{{ stats.total }}</p>
+        <p class="text-xs text-gray-400 mt-1">All stored contacts</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+        <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
+      </div>
+    </div>
+    <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width: {% if stats.total > 0 %}100{% else %}0{% endif %}%"></div>
+    </div>
+  </div>
+
+  <!-- Contacted -->
+  <div class="card group hover:shadow-card-hover transition-all duration-200">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contacted</p>
+        <p id="stat-contacted" class="text-3xl font-bold text-gray-900 mt-1">{{ stats.contacted }}</p>
+        <p class="text-xs text-gray-400 mt-1">Leads reached out</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
+        <i data-lucide="mail-check" class="w-5 h-5 text-primary"></i>
+      </div>
+    </div>
+    <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-full bg-primary rounded-full transition-all duration-1000"
+           style="width: {% if stats.total > 0 %}{{ ((stats.contacted / stats.total) * 100)|int }}{% else %}0{% endif %}%"></div>
+    </div>
+  </div>
+
+  <!-- Emails Sent -->
+  <div class="card group hover:shadow-card-hover transition-all duration-200">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Emails Sent</p>
+        <p id="stat-sent" class="text-3xl font-bold text-gray-900 mt-1">{{ stats.emails_sent }}</p>
+        <p class="text-xs text-gray-400 mt-1">Successfully delivered</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+        <i data-lucide="send" class="w-5 h-5 text-emerald-600"></i>
+      </div>
+    </div>
+    <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+           style="width: {% if stats.contacted > 0 %}{{ ((stats.emails_sent / stats.contacted) * 100)|int }}{% else %}0{% endif %}%"></div>
+    </div>
+  </div>
+
+  <!-- Failed -->
+  <div class="card group hover:shadow-card-hover transition-all duration-200">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</p>
+        <p id="stat-failed" class="text-3xl font-bold text-gray-900 mt-1">{{ stats.emails_failed }}</p>
+        <p class="text-xs text-gray-400 mt-1">Delivery failures</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+        <i data-lucide="mail-x" class="w-5 h-5 text-red-600"></i>
+      </div>
+    </div>
+    <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-full bg-red-500 rounded-full transition-all duration-1000"
+           style="width: {% if stats.contacted > 0 %}{{ ((stats.emails_failed / stats.contacted) * 100)|int }}{% else %}0{% endif %}%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── API Status + Quick Actions ─────────────────────────────── -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <!-- API Status -->
+  <div class="card col-span-1">
+    <h2 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+      <i data-lucide="radio" class="w-4 h-4 text-primary"></i> API Status
+    </h2>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full {% if serpapi_configured %}bg-primary animate-pulse{% else %}bg-amber-400{% endif %}"></div>
+          <span class="text-sm text-gray-700">Search API</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-medium {% if serpapi_configured %}text-primary{% else %}text-amber-600{% endif %}">
+            {% if serpapi_configured %}Connected{% else %}Simulated{% endif %}
+          </span>
+          <span class="text-xs text-gray-400">SerpApi</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full {% if email_configured %}bg-primary animate-pulse{% else %}bg-gray-300{% endif %}"></div>
+          <span class="text-sm text-gray-700">Email Service</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-medium {% if email_configured %}text-primary{% else %}text-gray-400{% endif %}">
+            {% if email_configured %}Connected{% else %}Not Set{% endif %}
+          </span>
+          <span class="text-xs text-gray-400 truncate max-w-24">{{ sender_email if email_configured else 'Configure SMTP' }}</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+          <span class="text-sm text-gray-700">Database</span>
+        </div>
+        <span class="text-xs font-medium text-primary">SQLite Active</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="card col-span-2">
+    <h2 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+      <i data-lucide="trending-up" class="w-4 h-4 text-primary"></i> Quick Actions
+    </h2>
+    <div class="grid grid-cols-2 gap-3">
+      <a href="{{ url_for('search_page') }}" class="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-primary-100 hover:border-primary hover:bg-primary-50 transition-all duration-200 group">
+        <div class="w-10 h-10 rounded-xl bg-primary-50 group-hover:bg-primary flex items-center justify-center transition-colors duration-200">
+          <i data-lucide="search" class="w-5 h-5 text-primary group-hover:text-white transition-colors duration-200"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">Search Leads</p>
+          <p class="text-xs text-gray-500">Find new businesses</p>
+        </div>
+      </a>
+      <a href="{{ url_for('leads_page') }}" class="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary-50 transition-all duration-200 group">
+        <div class="w-10 h-10 rounded-xl bg-gray-50 group-hover:bg-primary flex items-center justify-center transition-colors duration-200">
+          <i data-lucide="send" class="w-5 h-5 text-gray-500 group-hover:text-white transition-colors duration-200"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">Send Emails</p>
+          <p class="text-xs text-gray-500">Start bulk outreach</p>
+        </div>
+      </a>
+      <a href="{{ url_for('export_csv') }}" class="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary-50 transition-all duration-200 group">
+        <div class="w-10 h-10 rounded-xl bg-gray-50 group-hover:bg-primary flex items-center justify-center transition-colors duration-200">
+          <i data-lucide="file-down" class="w-5 h-5 text-gray-500 group-hover:text-white transition-colors duration-200"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">Export CSV</p>
+          <p class="text-xs text-gray-500">Download all leads</p>
+        </div>
+      </a>
+      <a href="{{ url_for('reports_page') }}" class="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary-50 transition-all duration-200 group">
+        <div class="w-10 h-10 rounded-xl bg-gray-50 group-hover:bg-primary flex items-center justify-center transition-colors duration-200">
+          <i data-lucide="bar-chart-3" class="w-5 h-5 text-gray-500 group-hover:text-white transition-colors duration-200"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">View Reports</p>
+          <p class="text-xs text-gray-500">Campaign analytics</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Getting Started ────────────────────────────────────────── -->
+{% if stats.total == 0 %}
+<div class="card border-2 border-dashed border-primary-100">
+  <div class="text-center py-8">
+    <div class="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
+      <i data-lucide="rocket" class="w-8 h-8 text-primary"></i>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 mb-2">Get Started with Lead Generation</h3>
+    <p class="text-sm text-gray-500 max-w-md mx-auto mb-6">
+      You have no leads yet. Start by searching for businesses, or configure your SMTP settings to send outreach emails.
+    </p>
+    <div class="flex items-center justify-center gap-3">
+      <a href="{{ url_for('search_page') }}" class="btn-primary">
+        <i data-lucide="search" class="w-4 h-4"></i> Start Lead Search
+      </a>
+      <a href="{{ url_for('settings_page') }}" class="btn-secondary">
+        <i data-lucide="settings" class="w-4 h-4"></i> Configure Settings
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Lead Database – Singing Bowl Export Desk{% endblock %}
+{% block page_title %}Lead Database{% endblock %}
+{% block page_subtitle %}Manage all leads, compose outreach emails, and track campaign delivery{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('export_csv') }}" class="btn-secondary text-sm">
+  <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
+</a>
+<a href="{{ url_for('export_excel') }}" class="btn-secondary text-sm">
+  <i data-lucide="table-2" class="w-4 h-4"></i> Excel
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- ─── Email Composer ─────────────────────────────────────────── -->
+<div class="card mb-5">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+      <i data-lucide="mail" class="w-4 h-4 text-primary"></i> Email Composer
+    </h2>
+    <div class="flex items-center gap-2">
+      <button onclick="previewEmail()" class="btn-secondary text-xs py-1.5 px-3">
+        <i data-lucide="eye" class="w-3.5 h-3.5"></i> Preview
+      </button>
+      <button onclick="saveDraft()" class="btn-secondary text-xs py-1.5 px-3">
+        <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Draft
+      </button>
+      <button onclick="sendBulkEmail()" id="send-bulk-btn" class="btn-primary text-xs py-1.5 px-4">
+        <i data-lucide="send" class="w-3.5 h-3.5"></i> Send Bulk Email
+      </button>
+    </div>
+  </div>
+
+  <!-- Subject -->
+  <div class="mb-3">
+    <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Email Subject</label>
+    <input id="email-subject" type="text" value="{{ email_subject }}"
+           class="form-input"
+           placeholder="e.g. Handcrafted Singing Bowl Export Catalog" />
+  </div>
+
+  <!-- Body -->
+  <div>
+    <div class="flex items-center justify-between mb-1.5">
+      <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Email Body (HTML)</label>
+      <div class="flex items-center gap-1 text-xs text-gray-400">
+        <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">&#123;&#123;ownerName&#125;&#125;</span>
+        <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">&#123;&#123;businessName&#125;&#125;</span>
+        <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">&#123;&#123;country&#125;&#125;</span>
+        <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">&#123;&#123;website&#125;&#125;</span>
+        <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">&#123;&#123;whatsAppNumber&#125;&#125;</span>
+      </div>
+    </div>
+    <textarea id="email-body" rows="12"
+              class="form-input font-mono text-xs resize-y"
+              placeholder="Compose your HTML email here...">{{ email_body | safe }}</textarea>
+  </div>
+</div>
+
+<!-- ─── Campaign Progress Banner ──────────────────────────────── -->
+<div id="campaign-banner" class="hidden card mb-5 border border-primary-100 bg-primary-50">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2">
+      <div class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></div>
+      <span class="text-sm font-semibold text-primary">Campaign Running</span>
+    </div>
+    <div class="flex items-center gap-4 text-xs font-medium">
+      <span class="text-green-600">✓ <span id="camp-sent">0</span> Sent</span>
+      <span class="text-red-600">✗ <span id="camp-failed">0</span> Failed</span>
+      <span class="text-gray-500">↷ <span id="camp-skipped">0</span> Skipped</span>
+    </div>
+  </div>
+  <div class="h-2.5 bg-white rounded-full overflow-hidden mb-2">
+    <div id="camp-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width:0%"></div>
+  </div>
+  <div class="flex items-center justify-between text-xs text-gray-600">
+    <span>Sending to: <strong id="camp-current-email" class="text-primary">—</strong></span>
+    <span><span id="camp-current">0</span> / <span id="camp-total">0</span></span>
+  </div>
+</div>
+
+<!-- ─── Leads Table Section ───────────────────────────────────── -->
+<div class="card">
+  <!-- Table Controls -->
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Search -->
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+        <input id="table-search" type="text" placeholder="Search leads..."
+               class="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-48" />
+      </div>
+      <!-- Country Filter -->
+      <select id="country-filter" class="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All Countries</option>
+        {% for country in countries %}
+        <option value="{{ country }}">{{ country }}</option>
+        {% endfor %}
+      </select>
+      <!-- Contacted Filter -->
+      <select id="contacted-filter" class="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All Status</option>
+        <option value="no">Not Contacted</option>
+        <option value="yes">Contacted</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="select-all-btn" onclick="toggleSelectAll()" class="btn-secondary text-xs py-1.5 px-3">
+        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Select All
+      </button>
+      <button onclick="bulkDeleteSelected()" id="bulk-delete-btn" class="btn-danger text-xs py-1.5 px-3 hidden">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Selected (<span id="selected-count">0</span>)
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-100">
+          <th class="py-3 px-3 text-left w-8"><input type="checkbox" id="header-checkbox" class="rounded" onchange="toggleHeaderCheck(this)" /></th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Business</th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Score</th>
+          <th class="py-3 px-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="py-3 px-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody" class="divide-y divide-gray-50">
+        <tr>
+          <td colspan="9" class="py-12 text-center text-gray-400">
+            <div class="flex flex-col items-center gap-2">
+              <i data-lucide="loader" class="w-8 h-8 animate-spin text-gray-300"></i>
+              <p class="text-sm">Loading leads...</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+    <p id="pagination-info" class="text-xs text-gray-500">Loading...</p>
+    <div class="flex items-center gap-2" id="pagination-controls"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/leads.js') }}"></script>
+{% endblock %}

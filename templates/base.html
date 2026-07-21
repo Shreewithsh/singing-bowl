@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Singing Bowl Export Desk - B2B Lead Generation and Cold Outreach Dashboard for Singing Bowl Export Businesses" />
+  <title>{% block title %}Singing Bowl Export Desk{% endblock %}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#16A34A', light: '#22C55E', dark: '#15803D', 50: '#F0FDF4', 100: '#DCFCE7' },
+            danger: { DEFAULT: '#7F1D1D', light: '#DC2626', muted: '#991B1B' },
+            bg: '#F8FAFC',
+            card: '#FFFFFF',
+            sidebar: '#FFFFFF',
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          boxShadow: {
+            card: '0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.06)',
+            'card-hover': '0 4px 12px 0 rgba(0,0,0,0.1)',
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-in': 'slideIn 0.3s ease-out',
+            'pulse-dot': 'pulseDot 2s infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="font-sans bg-bg text-gray-900 antialiased">
+
+<!-- ─── Sidebar ───────────────────────────────────────────────── -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-gray-100 shadow-sm z-30 flex flex-col transition-transform duration-300">
+  <!-- Logo -->
+  <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
+    <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm flex-shrink-0">
+      <span class="text-white font-bold text-sm">SB</span>
+    </div>
+    <div>
+      <p class="font-bold text-gray-900 text-sm leading-tight">Singing Bowl</p>
+      <p class="text-xs text-primary font-medium">Export Desk</p>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+    <a href="{{ url_for('dashboard') }}" id="nav-dashboard"
+       class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+              {% if active_page == 'dashboard' %}bg-primary-50 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+      <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('search_page') }}" id="nav-search"
+       class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+              {% if active_page == 'search' %}bg-primary-50 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+      <i data-lucide="search" class="w-4 h-4 flex-shrink-0"></i>
+      <span>Lead Search</span>
+    </a>
+    <a href="{{ url_for('leads_page') }}" id="nav-leads"
+       class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+              {% if active_page == 'leads' %}bg-primary-50 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+      <i data-lucide="users" class="w-4 h-4 flex-shrink-0"></i>
+      <span>Lead Database</span>
+      {% if global_stats.total > 0 %}
+      <span class="ml-auto bg-primary-100 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{{ global_stats.total }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('campaigns_page') }}" id="nav-campaigns"
+       class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+              {% if active_page == 'campaigns' %}bg-primary-50 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+      <i data-lucide="send" class="w-4 h-4 flex-shrink-0"></i>
+      <span>Campaigns</span>
+    </a>
+    <a href="{{ url_for('reports_page') }}" id="nav-reports"
+       class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+              {% if active_page == 'reports' %}bg-primary-50 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+      <i data-lucide="bar-chart-3" class="w-4 h-4 flex-shrink-0"></i>
+      <span>Reports</span>
+    </a>
+    <a href="{{ url_for('settings_page') }}" id="nav-settings"
+       class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+              {% if active_page == 'settings' %}bg-primary-50 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+      <i data-lucide="settings" class="w-4 h-4 flex-shrink-0"></i>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="px-4 py-4 border-t border-gray-100">
+    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
+      <div class="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center">
+        <i data-lucide="mail" class="w-3.5 h-3.5 text-primary"></i>
+      </div>
+      <div class="overflow-hidden">
+        <p class="text-xs text-gray-500">Sender</p>
+        <p class="text-xs font-medium text-gray-700 truncate">{{ sender_email }}</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── Main Content ───────────────────────────────────────────── -->
+<div class="ml-64 min-h-screen flex flex-col">
+  <!-- Top Navigation -->
+  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 px-6 py-3">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-base font-semibold text-gray-900">{% block page_title %}Singing Bowl Export Desk{% endblock %}</h1>
+        <p class="text-xs text-gray-500 mt-0.5">{% block page_subtitle %}Find real business emails, manage buyer leads, and send focused catalog outreach from one clean dashboard.{% endblock %}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        {% block header_actions %}{% endblock %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-1 p-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-100 px-6 py-3 text-center text-xs text-gray-400">
+    Singing Bowl Export Desk &copy; {{ now.year }} &mdash; Built for serious exporters
+  </footer>
+</div>
+
+<!-- ─── Toast Container ───────────────────────────────────────── -->
+<div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+<!-- ─── Reset Database Modal ──────────────────────────────────── -->
+<div id="reset-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeResetModal()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-slide-in">
+    <div class="flex items-center justify-center w-14 h-14 rounded-full bg-red-50 mx-auto mb-4">
+      <i data-lucide="alert-triangle" class="w-7 h-7 text-red-600"></i>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Reset Database</h3>
+    <p class="text-sm text-gray-600 text-center mb-6">This will permanently delete <strong>every stored lead</strong> and campaign record. This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button onclick="closeResetModal()" class="flex-1 btn-secondary">Cancel</button>
+      <button onclick="confirmReset()" id="confirm-reset-btn" class="flex-1 btn-danger">
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+        Delete Everything
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Email Preview Modal ───────────────────────────────────── -->
+<div id="preview-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePreviewModal()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h3 class="font-semibold text-gray-900">Email Preview</h3>
+      <button onclick="closePreviewModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+        <i data-lucide="x" class="w-4 h-4 text-gray-500"></i>
+      </button>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-b border-gray-100">
+      <p class="text-xs text-gray-500">Subject:</p>
+      <p id="preview-subject" class="text-sm font-medium text-gray-900"></p>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4">
+      <iframe id="preview-iframe" class="w-full rounded-lg border border-gray-200" style="min-height: 500px;"></iframe>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% block scripts %}{% endblock %}
+
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+
+  // Toast system
+  function showToast(message, type = 'success', duration = 4000) {
+    const id = 'toast-' + Date.now();
+    const colors = {
+      success: 'bg-green-600',
+      error: 'bg-red-600',
+      info: 'bg-blue-600',
+      warning: 'bg-amber-500'
+    };
+    const icons = {
+      success: 'check-circle',
+      error: 'x-circle',
+      info: 'info',
+      warning: 'alert-triangle'
+    };
+    const toast = document.createElement('div');
+    toast.id = id;
+    toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium max-w-sm transform translate-y-4 opacity-0 transition-all duration-300 ${colors[type] || colors.success}`;
+    toast.innerHTML = `
+      <i data-lucide="${icons[type] || 'info'}" class="w-4 h-4 flex-shrink-0"></i>
+      <span>${message}</span>
+      <button onclick="this.parentElement.remove()" class="ml-auto opacity-70 hover:opacity-100">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
+    `;
+    document.getElementById('toast-container').appendChild(toast);
+    lucide.createIcons();
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-4', 'opacity-0');
+    });
+    setTimeout(() => {
+      toast.classList.add('translate-y-4', 'opacity-0');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+
+  // Reset Modal
+  function openResetModal() {
+    document.getElementById('reset-modal').classList.remove('hidden');
+  }
+  function closeResetModal() {
+    document.getElementById('reset-modal').classList.add('hidden');
+  }
+  async function confirmReset() {
+    const btn = document.getElementById('confirm-reset-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Deleting...';
+    try {
+      const res = await fetch('/api/reset-database', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        closeResetModal();
+        showToast('Database reset successfully. All records deleted.', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.error || 'Reset failed', 'error');
+      }
+    } catch (e) {
+      showToast('Network error', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4"></i> Delete Everything';
+      lucide.createIcons();
+    }
+  }
+
+  // Preview modal
+  function closePreviewModal() {
+    document.getElementById('preview-modal').classList.add('hidden');
+  }
+</script>
+</body>
+</html>
